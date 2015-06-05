@@ -2,8 +2,6 @@
 
 namespace Kernel
 {
-namespace Util
-{
 	template <typename T>
 	class ReverseAdapter
 	{
@@ -31,5 +29,4 @@ namespace Util
 	private:
 		T m_begin, m_end;
 	};
-}
 }

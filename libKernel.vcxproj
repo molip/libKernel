@@ -54,6 +54,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>cJSON</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -66,6 +67,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>cJSON</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -74,10 +76,36 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Dynamic.h" />
+    <ClInclude Include="EnumArray.h" />
+    <ClInclude Include="EnumRange.h" />
+    <ClInclude Include="EnumTraits.h" />
+    <ClInclude Include="FormatString.h" />
+    <ClInclude Include="Filesystem.h" />
+    <ClInclude Include="Serial.h" />
+    <ClInclude Include="Json.h" />
+    <ClInclude Include="Singleton.h" />
+    <ClInclude Include="Xml.h" />
+    <ClInclude Include="cJSON\cJSON.h" />
+    <ClInclude Include="tinyxml2\tinyxml2.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Dynamic.cpp" />
+    <ClCompile Include="Filesystem.cpp" />
+    <ClCompile Include="FormatString.cpp" />
+    <ClCompile Include="Serial.cpp" />
+    <ClCompile Include="Json.cpp" />
+    <ClCompile Include="Xml.cpp" />
+    <ClCompile Include="cJSON\cJSON.c">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4996;4267</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4996;4267</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="tinyxml2\tinyxml2.cpp">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4267</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4267</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="Debug.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
