@@ -81,7 +81,7 @@ namespace Kernel
 	Verify(condition, Exception(__FILE__, __LINE__, msg))
 
 #ifdef _DEBUG
-#define KERNEL_ASSERT(f) (bool) ((f) || DebugBreak())
+#define KERNEL_ASSERT(f) (bool) ((f) || Kernel::DebugBreak())
 #else
 #define KERNEL_ASSERT(f) (f)
 #endif
