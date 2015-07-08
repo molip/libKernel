@@ -75,10 +75,10 @@ namespace Kernel
 }
 
 #define KERNEL_VERIFY(condition) \
-	Verify(condition, Exception(__FILE__, __LINE__))
+	Verify(condition, Kernel::Exception(__FILE__, __LINE__))
 
 #define KERNEL_VERIFY_MSG(msg, condition) \
-	Verify(condition, Exception(__FILE__, __LINE__, msg))
+	Verify(condition, Kernel::Exception(__FILE__, __LINE__, msg))
 
 #ifdef _DEBUG
 #define KERNEL_ASSERT(f) (bool) ((f) || Kernel::DebugBreak())
