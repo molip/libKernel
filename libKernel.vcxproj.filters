@@ -19,6 +19,7 @@
     <ClInclude Include="EnumRange.h" />
     <ClInclude Include="FormatString.h" />
     <ClInclude Include="Filesystem.h" />
+    <ClInclude Include="EnumBitset.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Debug.cpp" />

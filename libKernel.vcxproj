@@ -78,6 +78,7 @@
   <ItemGroup>
     <ClInclude Include="Dynamic.h" />
     <ClInclude Include="EnumArray.h" />
+    <ClInclude Include="EnumBitset.h" />
     <ClInclude Include="EnumRange.h" />
     <ClInclude Include="EnumTraits.h" />
     <ClInclude Include="FormatString.h" />
