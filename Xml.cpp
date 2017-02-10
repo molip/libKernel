@@ -28,12 +28,12 @@ bool Document::LoadFromString(const std::string str) const
 
 bool Document::LoadFromFile(const std::string& path)
 {
-	return m_pDoc->LoadFile(path.c_str()) == XML_NO_ERROR;
+	return m_pDoc->LoadFile(path.c_str()) == XML_SUCCESS;
 }
 
 bool Document::SaveToFile(const std::string& path) const
 {
-	return m_pDoc->SaveFile(path.c_str()) == XML_NO_ERROR;
+	return m_pDoc->SaveFile(path.c_str()) == XML_SUCCESS;
 }
 
 Element Document::AddElement(const std::string& name)
@@ -96,13 +96,13 @@ bool Element::QueryAttribute(const std::string& name, std::string& val) const
 bool Element::QueryAttribute(const std::string& name, int& val) const
 {
 	KERNEL_VERIFY(!!m_pElem);
-	return m_pElem->QueryIntAttribute(name.c_str(), &val) == XML_NO_ERROR;
+	return m_pElem->QueryIntAttribute(name.c_str(), &val) == XML_SUCCESS;
 }
 
 bool Element::QueryAttribute(const std::string& name, bool& val) const
 {
 	KERNEL_VERIFY(!!m_pElem);
-	return m_pElem->QueryBoolAttribute(name.c_str(), &val) == XML_NO_ERROR;
+	return m_pElem->QueryBoolAttribute(name.c_str(), &val) == XML_SUCCESS;
 }
 
 std::string Element::GetAttributeStr(const std::string& name) const
