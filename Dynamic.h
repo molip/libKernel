@@ -44,7 +44,7 @@ namespace Kernel
 		namespace { \
 			struct _Register_##T {\
 				_Register_##T() { \
-					Dynamic::RegisterObject(typeid(T).name(), [] { return new T; } ); \
+					Kernel::Dynamic::RegisterObject(typeid(T).name(), [] { return new T; } ); \
 				} \
 			} _register_##T; \
 		}
