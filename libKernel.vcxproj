@@ -83,6 +83,7 @@
     <ClInclude Include="EnumTraits.h" />
     <ClInclude Include="FormatString.h" />
     <ClInclude Include="Filesystem.h" />
+    <ClInclude Include="IndexRange.h" />
     <ClInclude Include="Serial.h" />
     <ClInclude Include="Json.h" />
     <ClInclude Include="Singleton.h" />
