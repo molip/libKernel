@@ -230,7 +230,7 @@ namespace Kernel
 			}
 		}
 
-		template <typename T> bool SaveClass(const std::string& path, const T& obj)
+		template <typename TPath, typename T> bool SaveClass(const TPath& path, const T& obj)
 		{
 			Xml::Document doc;
 			ClassSaver()(doc.AddElement("class"), obj);
@@ -238,7 +238,7 @@ namespace Kernel
 			return doc.SaveToFile(path);
 		}
 
-		template <typename T> bool SaveObject(const std::string& path, const T* pObj)
+		template <typename TPath, typename T> bool SaveObject(const TPath& path, const T* pObj)
 		{
 			Xml::Document doc;
 			ObjectSaver()(doc.AddElement("object"), pObj);
@@ -565,7 +565,7 @@ namespace Kernel
 			return true;
 		}
 
-		template <typename T> bool LoadClass(const std::string& path, T& obj)
+		template <typename TPath, typename T> bool LoadClass(const TPath& path, T& obj)
 		{
 			Xml::Document doc;
 			if (doc.LoadFromFile(path))
@@ -587,7 +587,7 @@ namespace Kernel
 			return false;
 		}
 
-		template <typename T> bool LoadObject(const std::string& path, T& pObj)
+		template <typename TPath, typename T> bool LoadObject(const TPath& path, T& pObj)
 		{
 			Xml::Document doc;
 			if (doc.LoadFromFile(path))

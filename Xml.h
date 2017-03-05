@@ -58,6 +58,8 @@ namespace Kernel
 
 			bool SaveToFile(const std::string& path) const;
 			bool LoadFromFile(const std::string& path);
+			bool SaveToFile(const std::wstring& path) const;
+			bool LoadFromFile(const std::wstring& path);
 
 			std::string SaveToString() const;
 			bool LoadFromString(const std::string str) const;

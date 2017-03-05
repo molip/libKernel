@@ -36,6 +36,32 @@ bool Document::SaveToFile(const std::string& path) const
 	return m_pDoc->SaveFile(path.c_str()) == XML_SUCCESS;
 }
 
+bool Document::LoadFromFile(const std::wstring& path)
+{
+	bool ok = false;
+	FILE* file = nullptr;
+	errno_t err = ::_wfopen_s(&file, path.c_str(), L"rb");
+	if (file && !err)
+	{
+		ok = m_pDoc->LoadFile(file) == XML_SUCCESS;
+		::fclose(file);
+	}
+	return ok;
+}
+
+bool Document::SaveToFile(const std::wstring& path) const
+{
+	bool ok = false;
+	FILE* file = nullptr;
+	errno_t err = ::_wfopen_s(&file, path.c_str(), L"wb");
+	if (file && !err)
+	{
+		ok = m_pDoc->SaveFile(file) == XML_SUCCESS;
+		::fclose(file);
+	}
+	return ok;
+}
+
 Element Document::AddElement(const std::string& name)
 {
 	XMLElement* pElem = m_pDoc->NewElement(name.c_str());
