@@ -1,6 +1,6 @@
 [submodule "cJSON"]
 	path = cJSON
-	url=https://github.com/DaveGamble/cJSON
+	url=https://github.com/molip/cJSON
 [submodule "tinyxml2"]
 	path = tinyxml2
-	url = https://github.com/leethomason/tinyxml2
+	url = https://github.com/molip/tinyxml2
