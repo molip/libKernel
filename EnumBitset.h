@@ -19,6 +19,6 @@ namespace Kernel
 		}
 
 		bool operator[] (E e) const { return Base::operator[]((int)e); }
-		reference operator[] (E e) { return Base::operator[]((int)e); }
+		typename Base::reference operator[] (E e) { return Base::operator[]((int)e); }
 	};
 }
