@@ -21,6 +21,7 @@
     <ClInclude Include="Filesystem.h" />
     <ClInclude Include="EnumBitset.h" />
     <ClInclude Include="IndexRange.h" />
+    <ClInclude Include="MinFinder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Debug.cpp" />
