@@ -22,6 +22,7 @@
     <ClInclude Include="EnumBitset.h" />
     <ClInclude Include="IndexRange.h" />
     <ClInclude Include="MinFinder.h" />
+    <ClInclude Include="Math.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Debug.cpp" />
