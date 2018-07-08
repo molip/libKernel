@@ -40,12 +40,15 @@ namespace Kernel
 		static ClassMap& GetClassMap();
 	};
 
-	#define REGISTER_DYNAMIC(T) \
+	#define REGISTER_DYNAMIC_2(T, counter) \
 		namespace { \
-			struct _Register_##T {\
-				_Register_##T() { \
+			struct _Register_##counter {\
+				_Register_##counter() { \
 					Kernel::Dynamic::RegisterObject(typeid(T).name(), [] { return new T; } ); \
 				} \
-			} _register_##T; \
+			} _register_##counter; \
 		}
+
+	#define REGISTER_DYNAMIC_1(T, counter) REGISTER_DYNAMIC_2(T, counter)
+	#define REGISTER_DYNAMIC(T) REGISTER_DYNAMIC_1(T, __COUNTER__)
 }
