@@ -6,6 +6,7 @@
 #include "EnumTraits.h"
 
 #include <string>
+#include <unordered_map>
 
 namespace Kernel
 {
@@ -23,10 +24,25 @@ namespace Kernel
 			return ss.str();
 		}
 
+		class SaveContext
+		{
+		public:
+			SaveContext(SaveNode& node);
+			~SaveContext();
+
+			int GetIDForObject(const void* obj)
+			{
+				return obj ? map.insert({ obj, (int)map.size() }).first->second : -1;
+			}
+		private:
+			SaveNode& m_node;
+			std::unordered_map<const void*, int> map;
+		};
+
 		class SaveNode
 		{
 		public:
-			explicit SaveNode(Xml::Element elem);
+			explicit SaveNode(Xml::Element elem, SaveContext* ctx);
 
 			template <typename T> void SaveType(const std::string& name, const T& val);
 			template <typename T> void SaveEnum(const std::string& name, const T& val);
@@ -44,92 +60,105 @@ namespace Kernel
 			template <typename T, typename S1, typename S2> void SavePairs(const std::string& name, const T& cntr, S1 saver1, S2 saver2);
 			template <typename T, typename S1, typename S2> void SavePair(const std::string& name, const T& pair, S1 saver1, S2 saver2);
 
+			void SetContext(SaveContext* ctx) { m_ctx = ctx; }
+
+			void SaveObjectID(const void* obj)
+			{
+				SaveType("_id", m_ctx->GetIDForObject(obj));
+			}
+
+			void SaveObjectRef(const std::string& name, const void* obj)
+			{
+				SaveType(name, m_ctx->GetIDForObject(obj));
+			}
+
 		private:
 			Xml::Element m_elem;
+			SaveContext* m_ctx;
 		};
 
 		struct TypeSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T& val) { SaveNode(e).SaveType("_value", val); }
+			template <typename T> void operator ()(Xml::Element& e, const T& val, SaveContext* ctx) { SaveNode(e, ctx).SaveType("_value", val); }
 		};
 
 		struct EnumSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T& val) { SaveNode(e).SaveEnum("_enum", val); }
+			template <typename T> void operator ()(Xml::Element& e, const T& val, SaveContext* ctx) { SaveNode(e, ctx).SaveEnum("_enum", val); }
 		};
 
 		struct ClassSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T& obj) { obj.Save(SaveNode(e)); }
+			template <typename T> void operator ()(Xml::Element& e, const T& obj, SaveContext* ctx) { obj.Save(SaveNode(e, ctx)); }
 		};
 
 		struct PtrSaver
 		{
-			template <typename T, typename S> void operator ()(Xml::Element& e, const T* pObj, S saver)
+			template <typename T, typename S> void operator ()(Xml::Element& e, const T* pObj, S saver, SaveContext* ctx)
 			{
 				if (pObj)
-					saver(e, *pObj);
+					saver(e, *pObj, ctx);
 				else
 					e.SetAttribute("_null", true);
 			}
 
-			template <typename T, typename S> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj, S saver)
+			template <typename T, typename S> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj, S saver, SaveContext* ctx)
 			{
-				operator ()(e, pObj.get(), saver);
+				operator ()(e, pObj.get(), saver, ctx);
 			}
 		};
 
 		struct ClassPtrSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T* pObj)
+			template <typename T> void operator ()(Xml::Element& e, const T* pObj, SaveContext* ctx)
 			{
-				PtrSaver()(e, pObj, ClassSaver());
+				PtrSaver()(e, pObj, ClassSaver(), ctx);
 			}
 
-			template <typename T> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj)
+			template <typename T> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj, SaveContext* ctx)
 			{
-				operator ()(e, pObj.get());
+				operator ()(e, pObj.get(), ctx);
 			}
 		};
 
 		struct TypePtrSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T* pObj)
+			template <typename T> void operator ()(Xml::Element& e, const T* pObj, SaveContext* ctx)
 			{
-				PtrSaver()(e, pObj, TypeSaver());
+				PtrSaver()(e, pObj, TypeSaver(), ctx);
 			}
 
-			template <typename T> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj)
+			template <typename T> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj, SaveContext* ctx)
 			{
-				operator ()(e, pObj.get());
+				operator ()(e, pObj.get(), ctx);
 			}
 		};
 
 		struct ObjectSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T* pObj)
+			template <typename T> void operator ()(Xml::Element& e, const T* pObj, SaveContext* ctx)
 			{
 				e.SetAttribute("_class", pObj ? typeid(*pObj).name() : "_null");
 				if (pObj)
-					pObj->Save(SaveNode(e));
+					pObj->Save(SaveNode(e, ctx));
 			}
 
-			template <typename T> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj)
+			template <typename T> void operator ()(Xml::Element& e, const std::unique_ptr<T>& pObj, SaveContext* ctx)
 			{
-				operator ()(e, pObj.get());
+				operator ()(e, pObj.get(), ctx);
 			}
 		};
 
 		template <typename S>
 		struct CntrSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T& cntr) { SaveNode(e).SaveCntr("container", cntr, S()); }
+			template <typename T> void operator ()(Xml::Element& e, const T& cntr, SaveContext* ctx) { SaveNode(e, ctx).SaveCntr("container", cntr, S()); }
 		};
 
 		template <typename S1, typename S2>
 		struct PairSaver
 		{
-			template <typename T> void operator ()(Xml::Element& e, const T& pair) { SaveNode(e).SavePair("pair", pair, S1(), S2()); }
+			template <typename T> void operator ()(Xml::Element& e, const T& pair, SaveContext* ctx) { SaveNode(e, ctx).SavePair("pair", pair, S1(), S2()); }
 		};
 
 		template <typename T> void SaveNode::SaveType(const std::string& name, const T& val)
@@ -145,25 +174,25 @@ namespace Kernel
 		template <typename T> void SaveNode::SaveClass(const std::string& name, const T& obj)
 		{
 			Xml::Element elem = m_elem.AddElement(name);
-			ClassSaver()(elem, obj);
+			ClassSaver()(elem, obj, m_ctx);
 		}
 
 		template <typename T> void SaveNode::SaveClassPtr(const std::string& name, const T* pObj)
 		{
 			Xml::Element elem = m_elem.AddElement(name);
-			ClassPtrSaver()(elem, pObj);
+			ClassPtrSaver()(elem, pObj, m_ctx);
 		}
 
 		template <typename T> void SaveNode::SaveTypePtr(const std::string& name, const T* pObj)
 		{
 			Xml::Element elem = m_elem.AddElement(name);
-			TypePtrSaver()(elem, pObj);
+			TypePtrSaver()(elem, pObj, m_ctx);
 		}
 
 		template <typename T> void SaveNode::SaveObject(const std::string& name, const T* pObj)
 		{
 			Xml::Element elem = m_elem.AddElement(name);
-			ObjectSaver()(elem, pObj);
+			ObjectSaver()(elem, pObj, m_ctx);
 		}
 
 		template <typename T> void SaveNode::SaveClassPtr(const std::string& name, const std::unique_ptr<T>& pObj)
@@ -187,7 +216,7 @@ namespace Kernel
 			for (auto&& v : cntr)
 			{
 				Xml::Element elem2 = elem.AddElement("_item");
-				saver(elem2, v);
+				saver(elem2, v, m_ctx);
 			}
 		}
 
@@ -197,16 +226,16 @@ namespace Kernel
 			for (auto&& v : cntr)
 			{
 				Xml::Element elem2 = elem.AddElement("_item");
-				saver1(elem2.AddElement("_first"), v.first);
-				saver2(elem2.AddElement("_second"), v.second);
+				saver1(elem2.AddElement("_first"), v.first, m_ctx);
+				saver2(elem2.AddElement("_second"), v.second, m_ctx);
 			}
 		}
 
 		template <typename T, typename S1, typename S2> void SaveNode::SavePair(const std::string& name, const T& pair, S1 saver1, S2 saver2)
 		{
 			Xml::Element elem = m_elem.AddElement(name);
-			saver1(elem.AddElement("_first"), pair.first);
-			saver2(elem.AddElement("_second"), pair.second);
+			saver1(elem.AddElement("_first"), pair.first, m_ctx);
+			saver2(elem.AddElement("_second"), pair.second, m_ctx);
 		}
 
 		template <typename T, typename S> void SaveNode::SaveArray(const std::string& name, const T& cntr, S saver)
@@ -215,7 +244,7 @@ namespace Kernel
 			for (auto&& v : cntr)
 			{
 				Xml::Element elem2 = elem.AddElement("_item");
-				saver(elem2, v);
+				saver(elem2, v, m_ctx);
 			}
 		}
 
@@ -225,23 +254,23 @@ namespace Kernel
 			for (auto& kv : map)
 			{
 				Xml::Element item = elem.AddElement("_item");
-				keySaver(item.AddElement("_k"), kv.first);
-				valSaver(item.AddElement("_v"), kv.second);
+				keySaver(item.AddElement("_k"), kv.first, m_ctx);
+				valSaver(item.AddElement("_v"), kv.second, m_ctx);
 			}
 		}
 
-		template <typename TPath, typename T> bool SaveClass(const TPath& path, const T& obj)
+		template <typename TPath, typename T> bool SaveClass(const TPath& path, const T& obj, SaveContext* ctx = nullptr)
 		{
 			Xml::Document doc;
-			ClassSaver()(doc.AddElement("class"), obj);
+			ClassSaver()(doc.AddElement("class"), obj, ctx);
 
 			return doc.SaveToFile(path);
 		}
 
-		template <typename TPath, typename T> bool SaveObject(const TPath& path, const T* pObj)
+		template <typename TPath, typename T> bool SaveObject(const TPath& path, const T* pObj, SaveContext* ctx = nullptr)
 		{
 			Xml::Document doc;
-			ObjectSaver()(doc.AddElement("object"), pObj);
+			ObjectSaver()(doc.AddElement("object"), pObj, ctx);
 
 			return doc.SaveToFile(path);
 		}
@@ -249,6 +278,39 @@ namespace Kernel
 
 		///////////////////////////////////////////////////////////////////////////////
 		// Loading
+
+		class LoadContext
+		{
+		public:
+			LoadContext(const LoadNode& node);
+			~LoadContext();
+
+			void RegisterObject(int id, void* obj)
+			{
+				KERNEL_ASSERT(id >= 0);
+				objs.insert({ id, obj });
+			}
+
+			void RegisterRef(int id, void** obj)
+			{
+				if (id >= 0)
+					refs.push_back({ id, obj });
+			}
+
+			void ResolveRefs()
+			{
+				for (const auto[index, ref] : refs)
+					*ref = objs[index];
+
+				refs.clear();
+				objs.clear();
+			}
+
+		private:
+			const LoadNode& m_node;
+			std::vector<std::pair<int, void**>> refs;
+			std::unordered_map<int, void*> objs;
+		};
 
 		template <typename T> T FromString(const std::string& s)
 		{
@@ -263,7 +325,7 @@ namespace Kernel
 		class LoadNode
 		{
 		public:
-			explicit LoadNode(Xml::Element elem);
+			explicit LoadNode(Xml::Element elem, LoadContext* ctx);
 
 			template <typename T> bool LoadType(const std::string& name, T& val) const;
 			template <typename T> bool LoadEnum(const std::string& name, T& val) const;
@@ -281,28 +343,46 @@ namespace Kernel
 			template <typename T, typename L1, typename L2> bool LoadPairs(const std::string& name, T& cntr, L1 loader1, L2 loader2) const;
 			template <typename T, typename L1, typename L2> bool LoadPair(const std::string& name, T& pair, L1 loader1, L2 loader2) const;
 
+			void LoadObjectID(void* obj) const
+			{
+				int id = -1;
+				LoadType("_id", id);
+				m_ctx->RegisterObject(id, obj);
+			}
+
+			template <typename T>
+			void LoadObjectRef(const std::string& name, const T* const & obj) const
+			{
+				int id = -1;
+				LoadType(name, id);
+				m_ctx->RegisterRef(id, reinterpret_cast<void**>(const_cast<T**>(&obj)));
+			}
+
+			void SetContext(LoadContext* ctx) const { m_ctx = ctx; }
+
 		private:
 			const Xml::Element m_elem;
+			mutable LoadContext* m_ctx;
 		};
 
 		struct TypeLoader
 		{
-			template <typename T> void operator ()(const Xml::Element& e, T& val) { LoadNode(e).LoadType("_value", val); }
+			template <typename T> void operator ()(const Xml::Element& e, T& val, LoadContext* ctx) { LoadNode(e, ctx).LoadType("_value", val); }
 		};
 
 		struct EnumLoader
 		{
-			template <typename T> void operator ()(const Xml::Element& e, T& val) { LoadNode(e).LoadEnum("_enum", val); }
+			template <typename T> void operator ()(const Xml::Element& e, T& val, LoadContext* ctx) { LoadNode(e, ctx).LoadEnum("_enum", val); }
 		};
 
 		struct ClassLoader
 		{
-			template <typename T> void operator ()(const Xml::Element& e, T& obj) { obj.Load(LoadNode(e)); }
+			template <typename T> void operator ()(const Xml::Element& e, T& obj, LoadContext* ctx) { obj.Load(LoadNode(e, ctx)); }
 		};
 
 		struct PtrLoader
 		{
-			template <typename T, typename L> void operator ()(const Xml::Element& e, T*& pObj, L loader)
+			template <typename T, typename L> void operator ()(const Xml::Element& e, T*& pObj, L loader, LoadContext* ctx)
 			{
 				delete pObj;
 				pObj = nullptr;
@@ -312,44 +392,44 @@ namespace Kernel
 				if (!bNull)
 				{
 					pObj = new T;
-					loader(e, *pObj);
+					loader(e, *pObj, ctx);
 				}
 			}
-			template <typename T, typename L> void operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj, L loader)
+			template <typename T, typename L> void operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj, L loader, LoadContext* ctx)
 			{
 				T* p = nullptr;
-				operator()(e, p, loader);
+				operator()(e, p, loader, ctx);
 				pObj.reset(p);
 			}
 		};
 
 		struct ClassPtrLoader
 		{
-			template <typename T> void operator ()(const Xml::Element& e, T*& pObj)
+			template <typename T> void operator ()(const Xml::Element& e, T*& pObj, LoadContext* ctx)
 			{
-				PtrLoader()(e, pObj, ClassLoader());
+				PtrLoader()(e, pObj, ClassLoader(), ctx);
 			}
-			template <typename T> void operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj)
+			template <typename T> void operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj, LoadContext* ctx)
 			{
-				PtrLoader()(e, pObj, ClassLoader());
+				PtrLoader()(e, pObj, ClassLoader(), ctx);
 			}
 		};
 
 		struct TypePtrLoader
 		{
-			template <typename T> void operator ()(const Xml::Element& e, T*& pObj)
+			template <typename T> void operator ()(const Xml::Element& e, T*& pObj, LoadContext* ctx)
 			{
-				PtrLoader()(e, pObj, TypeLoader());
+				PtrLoader()(e, pObj, TypeLoader(), ctx);
 			}
-			template <typename T> void operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj)
+			template <typename T> void operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj, LoadContext* ctx)
 			{
-				PtrLoader()(e, pObj, TypeLoader());
+				PtrLoader()(e, pObj, TypeLoader(), ctx);
 			}
 		};
 
 		struct ObjectLoader
 		{
-			template <typename T> bool operator ()(const Xml::Element& e, T*& pObj)
+			template <typename T> bool operator ()(const Xml::Element& e, T*& pObj, LoadContext* ctx)
 			{
 				std::string id = e.GetAttributeStr("_class");
 
@@ -361,15 +441,15 @@ namespace Kernel
 
 				if (pObj = Dynamic::CreateObject<T>(id))
 				{
-					pObj->Load(LoadNode(e));
+					pObj->Load(LoadNode(e, ctx));
 					return true;
 				}
 				return false;
 			}
-			template <typename T> bool operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj)
+			template <typename T> bool operator ()(const Xml::Element& e, std::unique_ptr<T>& pObj, LoadContext* ctx)
 			{
 				T* p = nullptr;
-				bool bOK = operator()(e, p);
+				bool bOK = operator()(e, p, ctx);
 				pObj.reset(p);
 				return bOK;
 			}
@@ -378,13 +458,13 @@ namespace Kernel
 		template <typename L>
 		struct CntrLoader
 		{
-			template <typename T> void operator ()(const Xml::Element& e, T& cntr) { LoadNode(e).LoadCntr("container", cntr, L()); }
+			template <typename T> void operator ()(const Xml::Element& e, T& cntr, LoadContext* ctx) { LoadNode(e, ctx).LoadCntr("container", cntr, L()); }
 		};
 
 		template <typename L1, typename L2>
 		struct PairLoader
 		{
-			template <typename T> void operator ()(const Xml::Element& e, T& pair) { LoadNode(e).LoadPair("pair", pair, L1(), L2()); }
+			template <typename T> void operator ()(const Xml::Element& e, T& pair, LoadContext* ctx) { LoadNode(e, ctx).LoadPair("pair", pair, L1(), L2()); }
 		};
 
 		template <typename T> bool LoadNode::LoadType(const std::string& name, T& val) const
@@ -413,7 +493,7 @@ namespace Kernel
 			if (e.IsNull())
 				return false;
 
-			ClassLoader()(e, obj);
+			ClassLoader()(e, obj, m_ctx);
 			return true;
 		}
 
@@ -423,7 +503,7 @@ namespace Kernel
 			if (e.IsNull())
 				return false;
 
-			ClassPtrLoader()(e, pObj);
+			ClassPtrLoader()(e, pObj, m_ctx);
 			return true;
 		}
 
@@ -441,7 +521,7 @@ namespace Kernel
 			if (e.IsNull())
 				return false;
 
-			TypePtrLoader()(e, pObj);
+			TypePtrLoader()(e, pObj, m_ctx);
 			return true;
 		}
 
@@ -461,7 +541,7 @@ namespace Kernel
 			if (e.IsNull())
 				return false;
 
-			return ObjectLoader()(e, pObj);
+			return ObjectLoader()(e, pObj, m_ctx);
 		}
 
 		template <typename T> bool LoadNode::LoadObject(const std::string& name, std::unique_ptr<T>& pObj) const
@@ -483,7 +563,7 @@ namespace Kernel
 			for (const auto i : Xml::ElementRange(e, "_item"))
 			{
 				T::value_type v = T::value_type();
-				loader(i, v);
+				loader(i, v, m_ctx);
 				cntr.insert(cntr.end(), std::move(v));
 			}
 			return true;
@@ -501,11 +581,11 @@ namespace Kernel
 			{
 				const Xml::Element e1 = i.GetFirstChild("_first");
 				T::value_type::first_type v1 = T::value_type::first_type();
-				loader1(e1, v1);
+				loader1(e1, v1, m_ctx);
 
 				const Xml::Element e2 = i.GetFirstChild("_second");
 				T::value_type::second_type v2 = T::value_type::second_type();
-				loader2(e2, v2);
+				loader2(e2, v2, m_ctx);
 
 				cntr.insert(cntr.end(), std::make_pair(std::move(v1), std::move(v2)));
 			}
@@ -519,10 +599,10 @@ namespace Kernel
 				return false;
 
 			const Xml::Element e1 = e.GetFirstChild("_first");
-			loader1(e1, pair.first);
+			loader1(e1, pair.first, m_ctx);
 
 			const Xml::Element e2 = e.GetFirstChild("_second");
-			loader2(e2, pair.second);
+			loader2(e2, pair.second, m_ctx);
 
 			return true;
 		}
@@ -536,7 +616,7 @@ namespace Kernel
 			int i = 0;
 			for (const auto item : Xml::ElementRange(e, "_item"))
 			{
-				loader(item, cntr[i++]);
+				loader(item, cntr[i++], m_ctx);
 			}
 			return true;
 		}
@@ -558,14 +638,14 @@ namespace Kernel
 				const Xml::Element v = item.GetFirstChild("_v");
 				KERNEL_VERIFY(!k.IsNull() && !v.IsNull());
 
-				keyLoader(k, key);
-				valLoader(v, val);
+				keyLoader(k, key, m_ctx);
+				valLoader(v, val, m_ctx);
 				map.insert(std::make_pair(std::move(key), std::move(val)));
 			}
 			return true;
 		}
 
-		template <typename TPath, typename T> bool LoadClass(const TPath& path, T& obj)
+		template <typename TPath, typename T> bool LoadClass(const TPath& path, T& obj, LoadContext* ctx = nullptr)
 		{
 			Xml::Document doc;
 			if (doc.LoadFromFile(path))
@@ -575,7 +655,7 @@ namespace Kernel
 				{
 					try
 					{
-						ClassLoader()(doc.GetRoot(), obj);
+						ClassLoader()(doc.GetRoot(), obj, ctx);
 					}
 					catch (LoadException&)
 					{
@@ -587,7 +667,7 @@ namespace Kernel
 			return false;
 		}
 
-		template <typename TPath, typename T> bool LoadObject(const TPath& path, T& pObj)
+		template <typename TPath, typename T> bool LoadObject(const TPath& path, T& pObj, LoadContext* ctx = nullptr)
 		{
 			Xml::Document doc;
 			if (doc.LoadFromFile(path))
@@ -596,7 +676,7 @@ namespace Kernel
 				if (!root.IsNull() && root.GetName() == "object")
 					try
 				{
-					return ObjectLoader()(doc.GetRoot(), pObj);
+					return ObjectLoader()(doc.GetRoot(), pObj, m_ctx);
 				}
 				catch (LoadException& e)
 				{
