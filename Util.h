@@ -3,10 +3,10 @@
 namespace Kernel
 {
 	template <typename T>
-	class ReverseAdapter
+	class ConstReverseAdapter
 	{
 	public:
-		explicit ReverseAdapter(const T& t) : m_t(t) {}
+		explicit ConstReverseAdapter(const T& t) : m_t(t) {}
 
 		typename T::const_reverse_iterator begin() const { return m_t.rbegin(); }
 		typename T::const_reverse_iterator end() const { return m_t.rend(); }
@@ -15,7 +15,22 @@ namespace Kernel
 	};
 
 	template <typename T>
-	ReverseAdapter<T> Reverse(const T& t) { return ReverseAdapter<T>(t); }
+	class ReverseAdapter
+	{
+	public:
+		explicit ReverseAdapter(T& t) : m_t(t) {}
+
+		typename T::reverse_iterator begin() const { return m_t.rbegin(); }
+		typename T::reverse_iterator end() const { return m_t.rend(); }
+	private:
+		T& m_t;
+	};
+
+	template <typename T>
+	ConstReverseAdapter<T> Reverse(const T& t) { return ConstReverseAdapter<T>(t); }
+
+	template <typename T>
+	ReverseAdapter<T> Reverse(T& t) { return ReverseAdapter<T>(t); }
 
 	template <typename T>
 	class Iterable
