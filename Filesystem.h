@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 
-namespace Kernel
+namespace Kernel::FileSystem
 {
-
-std::vector<std::string> FindFilesInDir(const std::string& dir, const std::string& pattern = "*");
-bool DeleteFile(const std::string& path);
-
+	std::vector<std::wstring> FindFilesInDir(const std::wstring& dir, const std::wstring& pattern = L"*");
+	bool DeleteFile(const std::wstring& path);
+	bool CreateDir(const std::wstring& path, bool failIfExists = false);
+	std::wstring GetUserDocumentsDir();
 }
