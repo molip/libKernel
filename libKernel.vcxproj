@@ -86,6 +86,7 @@
     <ClInclude Include="FormatString.h" />
     <ClInclude Include="Filesystem.h" />
     <ClInclude Include="IndexRange.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MinFinder.h" />
     <ClInclude Include="Serial.h" />
@@ -101,8 +102,10 @@
     <ClCompile Include="Dynamic.cpp" />
     <ClCompile Include="Filesystem.cpp" />
     <ClCompile Include="FormatString.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="Serial.cpp" />
     <ClCompile Include="Json.cpp" />
+    <ClCompile Include="Util.cpp" />
     <ClCompile Include="Xml.cpp" />
     <ClCompile Include="cJSON\cJSON.c">
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4996;4267</DisableSpecificWarnings>

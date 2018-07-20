@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace Kernel
 {
 	template <typename T>
@@ -44,4 +46,8 @@ namespace Kernel
 	private:
 		T m_begin, m_end;
 	};
+
+	std::wstring StringToWString(const std::string& str);
+	std::string WStringToString(const std::wstring& str);
+	std::string GetTimeStamp();
 }
