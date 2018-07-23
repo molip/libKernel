@@ -33,17 +33,25 @@ using namespace std::literals;
 
 bool Kernel::DebugBreak() { ::DebugBreak(); return false; }
 
+namespace
+{
+	std::string GetLocationString(const char* file, int line)
+	{
+		std::ostringstream oss;
+
+		if (line != 0)
+		{
+			const char* trimmed = strrchr(file, '\\');
+			trimmed = trimmed ? trimmed + 1 : file;
+			oss << '[' << trimmed << ':' << line << ']';
+		}
+		return oss.str();
+	}
+}
+
 std::string Kernel::Exception::GetLocation() const
 {
-	std::ostringstream oss;
-	
-	if (_line != 0)
-	{
-		const char* trimmed = strrchr(_file, '\\');
-		trimmed = trimmed ? trimmed + 1 : _file;
-		oss << '[' << trimmed << ':' << _line << ']';
-	}
-	return oss.str();
+	return GetLocationString(_file, _line);
 }
 
 const char* Kernel::Exception::what() const
@@ -62,13 +70,18 @@ std::string Kernel::Exception::GetWhat() const
 	return s;
 }
 
-void Kernel::Verify(const void* condition, const Kernel::Exception& e)
+void Kernel::Verify(const void* condition, const char* file, int line)
 {
-	Kernel::Verify(condition != nullptr, e);
+	Kernel::Verify(condition != nullptr, file, line);
 }
 
-void Kernel::Verify(bool condition, const Kernel::Exception& e)
+void Kernel::Verify(bool condition, const char* file, int line)
 {
-	if (!KERNEL_ASSERT(condition))
-		e.Raise();
+	if (!condition)
+	{
+		if (::IsDebuggerPresent())
+			DebugBreak();
+		
+		::FatalAppExitA(0, (std::string("Assertion failed: ") + GetLocationString(file, line)).c_str());
+	}
 }

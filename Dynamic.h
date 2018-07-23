@@ -11,7 +11,7 @@ namespace Kernel
 	namespace Serial { class SaveNode; class LoadNode; }
 
 	class LoadException : public Exception { using Exception::Exception; };
-	#define KERNEL_VERIFY_LOAD(condition) Verify(condition, LoadException(__FILE__, __LINE__))
+	#define KERNEL_VERIFY_LOAD(condition) if (!(condition)) LoadException(__FILE__, __LINE__).Raise();
 
 	class Dynamic
 	{

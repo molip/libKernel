@@ -70,18 +70,21 @@ namespace Kernel
 		mutable std::string _what;
 	};
 
-	void Verify(const void* condition, const Exception& e);
-	void Verify(bool condition, const Exception& e);
+	void Verify(const void* condition, const char* file, int line);
+	void Verify(bool condition, const char* file, int line);
 }
 
 #define KERNEL_VERIFY(condition) \
-	Verify(condition, Kernel::Exception(__FILE__, __LINE__))
+	Kernel::Verify((condition), __FILE__, __LINE__)
 
 #define KERNEL_VERIFY_MSG(msg, condition) \
-	Verify(condition, Kernel::Exception(__FILE__, __LINE__, msg))
+	Kernel::Verify(condition, __FILE__, __LINE__, msg)
 
 #ifdef _DEBUG
-#define KERNEL_ASSERT(f) (bool) ((f) || Kernel::DebugBreak())
+	#define KERNEL_ASSERT(condition) Kernel::Verify((condition), __FILE__, __LINE__)
 #else
-#define KERNEL_ASSERT(f) (f)
+	#define KERNEL_ASSERT(condition) ((void)0)
 #endif
+
+#define KERNEL_FAIL KERNEL_ASSERT(false)
+
