@@ -8,17 +8,21 @@ namespace Kernel
 	class MinFinder
 	{
 	public:
-		MinFinder() : m_value(std::numeric_limits<Value>::max()) {}
-		explicit MinFinder(Value threshold) : m_value(threshold) {}
+		MinFinder() : m_value(std::numeric_limits<Value>::max()), m_threshold() {}
+		explicit MinFinder(Value threshold) : m_value(threshold), m_threshold(threshold) {}
 
-		void SetThreshold(Value threshold) { m_value = threshold; }
+		void SetThreshold(Value threshold) { m_value = m_threshold = threshold; }
 
-		bool Try(const Object& object, Value value)
+		bool Try(const Object& object, Value value, int priority = 0)
 		{
-			if (value < m_value)
+			if (priority < m_priority || value >= m_threshold)
+				return false;
+
+			if (value < m_value || priority > m_priority)
 			{
 				m_value = value;
 				m_object = object;
+				m_priority = priority;
 				return true;
 			}
 			
@@ -30,6 +34,7 @@ namespace Kernel
 
 	private:
 		Object m_object{};
-		Value m_value;
+		Value m_value, m_threshold;
+		int m_priority = -1;
 	};
 }
