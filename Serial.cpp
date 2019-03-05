@@ -16,24 +16,32 @@ LoadNode::LoadNode(Xml::Element elem, LoadContext* ctx) : m_elem(elem), m_ctx(ct
 	KERNEL_VERIFY(!m_elem.IsNull());
 }
 
-SaveContext::SaveContext(SaveNode& node) : m_node(node)
+SaveContext::SaveContext(SaveNode& node)
 {
-	m_node.SetContext(this); // TODO: push/pop.
+	// We only need one context - ignore nested. 
+	if (!node.GetContext())
+	{
+		m_node = &node;
+		node.SetContext(this);
+	}
 }
 
 SaveContext::~SaveContext()
 {
-	m_node.SetContext(nullptr);
+	if (m_node)
+		m_node->SetContext(nullptr);
 }
 
 LoadContext::LoadContext(const LoadNode& node) : m_node(node)
 {
-	m_node.SetContext(this); // TODO: push/pop.
+	m_parent = node.GetContext();
+	m_master = m_parent ? m_parent->m_master : this;
+	m_node.SetContext(this);
 }
 
 LoadContext::~LoadContext()
 {
-	m_node.SetContext(nullptr);
+	m_node.SetContext(m_parent);
 	// Don't call ResolveRefs - we might be unwinding.
 }
 

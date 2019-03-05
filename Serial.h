@@ -35,7 +35,7 @@ namespace Kernel
 				return obj ? map.insert({ obj, (int)map.size() }).first->second : -1;
 			}
 		private:
-			SaveNode& m_node;
+			SaveNode* m_node{};
 			std::unordered_map<const void*, int> map;
 		};
 
@@ -61,6 +61,7 @@ namespace Kernel
 			template <typename T, typename S1, typename S2> void SavePair(const std::string& name, const T& pair, S1 saver1, S2 saver2);
 
 			void SetContext(SaveContext* ctx) { m_ctx = ctx; }
+			SaveContext* GetContext() const { return m_ctx; }
 
 			void SaveObjectID(const void* obj)
 			{
@@ -288,7 +289,7 @@ namespace Kernel
 			void RegisterObject(int id, void* obj)
 			{
 				KERNEL_ASSERT(id >= 0);
-				objs.insert({ id, obj });
+				m_master->objs.insert({ id, obj });
 			}
 
 			void RegisterRef(int id, void** obj)
@@ -300,16 +301,17 @@ namespace Kernel
 			void ResolveRefs()
 			{
 				for (const auto[index, ref] : refs)
-					*ref = objs[index];
+					*ref = m_master->objs[index];
 
 				refs.clear();
-				objs.clear();
 			}
 
 		private:
+			LoadContext* m_parent;
+			LoadContext* m_master;
 			const LoadNode& m_node;
 			std::vector<std::pair<int, void**>> refs;
-			std::unordered_map<int, void*> objs;
+			std::unordered_map<int, void*> objs; // Only used in the top level context.
 		};
 
 		template <typename T> T FromString(const std::string& s)
@@ -358,6 +360,7 @@ namespace Kernel
 				m_ctx->RegisterRef(id, reinterpret_cast<void**>(const_cast<T**>(&obj)));
 			}
 
+			LoadContext* GetContext() const { return m_ctx; }
 			void SetContext(LoadContext* ctx) const { m_ctx = ctx; }
 
 		private:
