@@ -8,7 +8,7 @@ namespace Kernel
 	class MinFinder
 	{
 	public:
-		MinFinder() : m_value(std::numeric_limits<Value>::max()), m_threshold() {}
+		MinFinder() : MinFinder(std::numeric_limits<Value>::max()) {}
 		explicit MinFinder(Value threshold) : m_value(threshold), m_threshold(threshold) {}
 
 		void SetThreshold(Value threshold) { m_value = m_threshold = threshold; }
