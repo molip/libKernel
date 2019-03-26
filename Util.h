@@ -49,5 +49,9 @@ namespace Kernel
 
 	std::wstring StringToWString(const std::string& str);
 	std::string WStringToString(const std::wstring& str);
+	std::string ToLower(const std::string& str);
+	std::wstring ToLower(const std::wstring& str);
+	std::string ToUpper(const std::string& str);
+	std::wstring ToUpper(const std::wstring& str);
 	std::string GetTimeStamp();
 }
